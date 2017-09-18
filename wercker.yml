@@ -1,0 +1,58 @@
+box:
+  id: golang
+
+dev:
+  steps:
+    - wercker/setup-go-workspace:
+        package-dir: github.com/dansmithy/flights
+    - script:
+        code: |
+          go get ./...
+    - internal/watch:
+        code: |
+          go build ./...
+          ./flights
+        reload: true
+
+build:
+  base-path: /go/src/github.com/dansmithy/flights
+  steps:
+    - wercker/golint
+    - script:
+        name: go build
+        code: |
+          CGO_ENABLED=0 \
+            go build \
+            -ldflags="-s -X main.GitCommit=$WERCKER_GIT_COMMIT -X main.PatchVersion=$(( ($(date +%s) - $(date --date=20150101 +%s) )/(60*60*24) )) -X main.Compiled=$(date +%s)" \
+            -installsuffix cgo \
+            -o "$WERCKER_OUTPUT_DIR/flights"
+          cp -r "$WERCKER_OUTPUT_DIR/flights" "$WERCKER_REPORT_ARTIFACTS_DIR"
+
+push-quay:
+  box:
+    id: alpine
+    cmd: /bin/sh
+  steps:
+    - script:
+        name: install apk packages
+        code: |
+          echo "@edge http://dl-cdn.alpinelinux.org/alpine/edge/main" >> /etc/apk/repositories
+          apk update && apk add ca-certificates
+
+    - script:
+        name: add  user
+        code: adduser flights -D -u 1234
+
+    - script:
+        name: prepare
+        code: mv ./flights /flights
+
+    - internal/docker-push:
+        repository: dansmithy/flights
+        registry: https://registry.hub.docker.com
+        username: $DOCKERHUB_USERNAME
+        password: $DOCKERHUB_PASSWORD
+        entrypoint: /flights
+        tag: $WERCKER_GIT_BRANCH-$WERCKER_GIT_COMMIT,$WERCKER_GIT_COMMIT
+        user: 1234
+

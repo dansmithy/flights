@@ -52,7 +52,6 @@ push-quay:
         registry: https://registry.hub.docker.com
         username: $DOCKERHUB_USERNAME
         password: $DOCKERHUB_PASSWORD
-        entrypoint: /flights
-        tag: $WERCKER_GIT_BRANCH-$WERCKER_GIT_COMMIT,$WERCKER_GIT_COMMIT
+        tag: $WERCKER_GIT_BRANCH-$WERCKER_GIT_COMMIT,$WERCKER_GIT_COMMIT,latest
         user: 1234
 

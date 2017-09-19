@@ -6,12 +6,17 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"sync"
 	"time"
 )
 
 const startDate = "2018-03-24"
 const urlTemplate = "https://www.easyjet.com/ejcms/nocache/api/lowestfares/get/?originIata=%s&destinationIata=%s&displayCurrencyId=4&languageCode=en&startDate=%s"
+
+const defaultRootDir = "/flightdata"
+const responseDir = "/responses"
+const pollDir = "/polls"
 
 func makeRequest(url string) ([]byte, error) {
 	fmt.Printf("Making request to: [%s]\n", url)
@@ -38,19 +43,31 @@ func computeChecksum(content []byte) string {
 	return hex.EncodeToString(hashInBytes)
 }
 
-func processRoute(origin string, dest string, date string) error {
+func processRoute(responseDirPath string, pollDirPath string, origin string, dest string, date string) error {
 	respBody, err := makeRequest(makeURL(origin, dest, date))
 	if err != nil {
 		return err
 	}
 	checksum := computeChecksum(respBody)
-	filename := fmt.Sprintf("flightpolls/%s-%s-%s-%s", origin, dest, time.Now().Format("2006-01-02-150405"), checksum)
-	ioutil.WriteFile("flightdata/"+checksum, respBody, 0644)
+	filename := fmt.Sprintf(pollDirPath+"/%s-%s-%s-%s", origin, dest, time.Now().Format("2006-01-02-150405"), checksum)
+	ioutil.WriteFile(responseDirPath+"/"+checksum, respBody, 0644)
 	ioutil.WriteFile(filename, []byte(checksum+"\n"), 0644)
 	return nil
 }
 
 func main() {
+
+	var rootDir = defaultRootDir
+	if len(os.Args) > 1 {
+		rootDir = os.Args[1]
+	}
+	responseDirPath := rootDir + responseDir
+	pollDirPath := rootDir + pollDir
+
+	fmt.Println("Responses out to: " + responseDirPath)
+	fmt.Println("Polls out to: " + pollDirPath)
+	os.MkdirAll(responseDirPath, os.ModePerm)
+	os.MkdirAll(pollDirPath, os.ModePerm)
 
 	cities := [...]string{
 		"ALC",
@@ -81,7 +98,8 @@ func main() {
 	for _, city := range cities {
 		go func(city string) {
 			defer wg.Done()
-			processRoute("BRS", city, startDate)
+			processRoute(responseDirPath, pollDirPath, "BRS", city, startDate)
+			processRoute(responseDirPath, pollDirPath, city, "BRS", startDate)
 		}(city)
 	}
 	wg.Wait()

@@ -27,9 +27,6 @@ build:
             -installsuffix cgo \
             -o "$WERCKER_OUTPUT_DIR/flights"
           cp -r "$WERCKER_OUTPUT_DIR/flights" "$WERCKER_REPORT_ARTIFACTS_DIR"
-    - script:
-        name: copy-cron
-        code: cp "$WERCKER_SOURCE_DIR/crontab" "$WERCKER_OUTPUT_DIR"
 
 push-quay:
   box:

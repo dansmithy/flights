@@ -27,6 +27,9 @@ build:
             -installsuffix cgo \
             -o "$WERCKER_OUTPUT_DIR/flights"
           cp -r "$WERCKER_OUTPUT_DIR/flights" "$WERCKER_REPORT_ARTIFACTS_DIR"
+    - script:
+        name: copy-cron
+        code: cp "$WERCKER_SOURCE_DIR/crontab" "$WERCKER_OUTPUT_DIR"
 
 push-quay:
   box:
@@ -40,8 +43,10 @@ push-quay:
           apk update && apk add ca-certificates
 
     - script:
-        name: add  user
-        code: adduser flights -D -u 1234
+        name: crontab
+        code: |
+          crontab -l | { cat; echo "*/5 * 19-27 9 * /flights"; } | crontab -
+          crontab -l | { cat; echo "11 * * 10,11 * /flights"; } | crontab -
 
     - script:
         name: prepare
@@ -53,5 +58,5 @@ push-quay:
         username: $DOCKERHUB_USERNAME
         password: $DOCKERHUB_PASSWORD
         tag: $WERCKER_GIT_BRANCH-$WERCKER_GIT_COMMIT,$WERCKER_GIT_COMMIT,latest
-        user: 1234
-
+        cmd: /usr/sbin/crond -f
+ 

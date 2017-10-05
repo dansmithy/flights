@@ -42,8 +42,7 @@ push-quay:
     - script:
         name: crontab
         code: |
-          crontab -l | { cat; echo "*/5 * * 9,10 * /flights"; } | crontab -
-          crontab -l | { cat; echo "11 * * 11 * /flights"; } | crontab -
+          crontab -l | { cat; echo "11 * * * * /flights"; } | crontab -
 
     - script:
         name: prepare

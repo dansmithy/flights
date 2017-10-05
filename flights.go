@@ -49,7 +49,9 @@ func processRoute(responseDirPath string, pollDirPath string, origin string, des
 		return err
 	}
 	checksum := computeChecksum(respBody)
-	filename := fmt.Sprintf(pollDirPath+"/%s-%s-%s-%s", origin, dest, time.Now().Format("2006-01-02-150405"), checksum)
+	datedPollDirPath := pollDirPath + "/" + time.Now().Format("2006-0102")
+	os.MkdirAll(datedPollDirPath, os.ModePerm)
+	filename := fmt.Sprintf(datedPollDirPath+"/%s-%s-%s-%s", origin, dest, time.Now().Format("2006-01-02-150405"), checksum)
 	ioutil.WriteFile(responseDirPath+"/"+checksum, respBody, 0644)
 	ioutil.WriteFile(filename, []byte(checksum+"\n"), 0644)
 	return nil

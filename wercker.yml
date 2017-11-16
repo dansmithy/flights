@@ -50,7 +50,7 @@ push-quay:
 
     - internal/docker-push:
         repository: dansmithy/flights
-        registry: https://registry.hub.docker.com
+        registry: https://registry.hub.docker.com/v2
         username: $DOCKERHUB_USERNAME
         password: $DOCKERHUB_PASSWORD
         tag: $WERCKER_GIT_BRANCH-$WERCKER_GIT_COMMIT,$WERCKER_GIT_COMMIT,latest
